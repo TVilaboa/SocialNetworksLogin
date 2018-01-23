@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authentication.Cookies;
+﻿using Microsoft.AspNetCore.Authentication.Twitter;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -42,6 +42,14 @@ namespace SocialNetworksLogin
                     //options.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
                     //options.SaveTokens = true;
                 });
+
+            services.AddAuthentication().AddTwitter(twitterOptions =>
+            {
+                //twitterOptions.ConsumerKey = Configuration["Authentication:Twitter:ConsumerKey"];
+                //twitterOptions.ConsumerSecret = Configuration["Authentication:Twitter:ConsumerSecret"];
+                twitterOptions.ConsumerKey = Configuration["Authentication:Twitter:ConsumerKey"];
+                twitterOptions.ConsumerSecret = Configuration["Authentication:Twitter:ConsumerSecret"];
+            });
 
             // Add application services.
             services.AddTransient<IEmailSender, EmailSender>();
