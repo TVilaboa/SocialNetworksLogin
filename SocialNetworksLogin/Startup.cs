@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -33,6 +30,19 @@ namespace SocialNetworksLogin
                 .AddEntityFrameworkStores<ApplicationDbContext>()
                 .AddDefaultTokenProviders();
 
+
+
+            services.AddAuthentication()
+                .AddFacebook(options =>
+                {
+                    //options.AppId = Configuration["AuthenticationFacebookSettings:AppId"];
+                    options.AppId = "1889486091362759";
+                    //options.AppSecret = Configuration["AuthenticationFacebookSettings:AppSecret"];
+                    options.AppSecret = "215a45d1fda94c7b0c8e308e42cb46cd";
+                    //options.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+                    //options.SaveTokens = true;
+                });
+
             // Add application services.
             services.AddTransient<IEmailSender, EmailSender>();
 
@@ -57,7 +67,7 @@ namespace SocialNetworksLogin
 
             app.UseAuthentication();
 
-            app.UseMvc(routes =>
+         app.UseMvc(routes =>
             {
                 routes.MapRoute(
                     name: "default",
