@@ -17,6 +17,7 @@ using Newtonsoft.Json.Linq;
 using SocialNetworksLogin.Data;
 using SocialNetworksLogin.Models;
 using SocialNetworksLogin.Services;
+using Microsoft.AspNetCore.Authentication.OAuth.Claims;
 
 namespace SocialNetworksLogin
 {
@@ -54,6 +55,7 @@ namespace SocialNetworksLogin
                     options.Fields.Add("name");
                     options.Fields.Add("gender");
                     options.Fields.Add("picture");
+                    options.SaveTokens = true;
                     //options.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
                     //options.SaveTokens = true;
                 });
@@ -66,6 +68,7 @@ namespace SocialNetworksLogin
                 twitterOptions.ConsumerKey = "Z3fUDKtxPhN2ZuXakigoy6fe9";
                 twitterOptions.ConsumerSecret = "h4hF4Ce48LTmXnCbhK45wiLX7H2JrztHfTJAY5GqwOj3rijUwu";
                 twitterOptions.RetrieveUserDetails = true;
+                twitterOptions.SaveTokens = true;
             });
 
             services.AddAuthentication().AddInstagram(options =>
@@ -77,107 +80,51 @@ namespace SocialNetworksLogin
                 options.TokenEndpoint = "https://api.instagram.com/oauth/access_token";
                 options.Scope.Add("basic");
                 options.ClaimsIssuer = "Instagram";
+                options.SaveTokens = true;
                 options.UserInformationEndpoint = "https://api.instagram.com/v1/users/self";
                 options.SignInScheme =IdentityConstants.ExternalScheme;
                 options.Events = new Microsoft.AspNetCore.Authentication.OAuth.OAuthEvents
                 {
-                    OnTicketReceived = async context =>
-                    {
-                        //var request = new HttpRequestMessage(HttpMethod.Get, context.Options.UserInformationEndpoint);
-                        //request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", context.AccessToken);
-                        //request.Headers.Add("x-li-format", "json");
 
-                        //var response = await context.Backchannel.SendAsync(request, context.HttpContext.RequestAborted);
-                        //response.EnsureSuccessStatusCode();
-                        Stream originalBody = context.Response.Body;
-                        string responseBody = "";
-                        try
+                    
+                    OnCreatingTicket = async context =>
                         {
-                            using (var memStream = new MemoryStream())
+                            var url = context.Options.UserInformationEndpoint + "?access_token=" + context.AccessToken;
+                            var request = new HttpRequestMessage(HttpMethod.Get, url);
+                      
+                            request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                            //request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", context.AccessToken);
+
+                            var response = await context.Backchannel.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, context.HttpContext.RequestAborted);
+                            response.EnsureSuccessStatusCode();
+
+                            var data = JObject.Parse(await response.Content.ReadAsStringAsync());
+                            var user = data["data"];
+                            var userId = user.Value<string>("id");
+                            if (!string.IsNullOrEmpty(userId))
                             {
-                                context.Response.Body = memStream;
-
-                                //await next(context);
-
-                                memStream.Position = 0;
-                                responseBody = new StreamReader(memStream).ReadToEnd();
-
-                                memStream.Position = 0;
-                                await memStream.CopyToAsync(originalBody);
+                                context.Identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, userId, ClaimValueTypes.String, context.Options.ClaimsIssuer));
                             }
 
+                            var formattedName = user.Value<string>("full_name");
+                            if (!string.IsNullOrEmpty(formattedName))
+                            {
+                                context.Identity.AddClaim(new Claim(ClaimTypes.Name, formattedName, ClaimValueTypes.String, context.Options.ClaimsIssuer));
+                            }
+
+                            var email = user.Value<string>("emailAddress");
+                            if (!string.IsNullOrEmpty(email))
+                            {
+                                context.Identity.AddClaim(new Claim(ClaimTypes.Email, email, ClaimValueTypes.String,
+                                    context.Options.ClaimsIssuer));
+                            }
+                            var pictureUrl = user.Value<string>("profile_picture");
+                            if (!string.IsNullOrEmpty(pictureUrl))
+                            {
+                                context.Identity.AddClaim(new Claim("profile-picture", pictureUrl, ClaimValueTypes.String,
+                                    context.Options.ClaimsIssuer));
+                            }
                         }
-                        finally
-                        {
-                            context.Response.Body = originalBody;
-                        }
-                        var user = JObject.Parse(responseBody);
-
-                        var data = user.SelectToken("data")[0];
-
-                        var userId = (string)data["id"];
-                       
-                    },
-               
-                //OnCreatingTicket = async context =>
-                //    {
-                //        //var request = new HttpRequestMessage(HttpMethod.Get, context.Options.UserInformationEndpoint);
-                //        //request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", context.AccessToken);
-                //        //request.Headers.Add("x-li-format", "json");
-
-                //        //var response = await context.Backchannel.SendAsync(request, context.HttpContext.RequestAborted);
-                //        //response.EnsureSuccessStatusCode();
-                //        Stream originalBody = context.Response.Body;
-                //        string responseBody = "";
-                //        try
-                //        {
-                //            using (var memStream = new MemoryStream())
-                //            {
-                //                context.Response.Body = memStream;
-
-                //                //await next(context);
-
-                //                memStream.Position = 0;
-                //                responseBody = new StreamReader(memStream).ReadToEnd();
-
-                //                memStream.Position = 0;
-                //                await memStream.CopyToAsync(originalBody);
-                //            }
-
-                //        }
-                //        finally
-                //        {
-                //            context.Response.Body = originalBody;
-                //        }
-                //        var user = JObject.Parse(responseBody);
-
-                //        var data = user.SelectToken("data")[0];
-
-                //        var userId = (string)data["id"];
-                //        if (!string.IsNullOrEmpty(userId))
-                //        {
-                //            context.Identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, userId, ClaimValueTypes.String, context.Options.ClaimsIssuer));
-                //        }
-
-                //        var formattedName = (string)data["display_name"];
-                //        if (!string.IsNullOrEmpty(formattedName))
-                //        {
-                //            context.Identity.AddClaim(new Claim(ClaimTypes.Name, formattedName, ClaimValueTypes.String, context.Options.ClaimsIssuer));
-                //        }
-
-                //        var email = (string)data["email"];
-                //        if (!string.IsNullOrEmpty(email))
-                //        {
-                //            context.Identity.AddClaim(new Claim(ClaimTypes.Email, email, ClaimValueTypes.String,
-                //                context.Options.ClaimsIssuer));
-                //        }
-                //        var pictureUrl = (string)data["profile_image_url"];
-                //        if (!string.IsNullOrEmpty(pictureUrl))
-                //        {
-                //            context.Identity.AddClaim(new Claim("profile-picture", pictureUrl, ClaimValueTypes.String,
-                //                context.Options.ClaimsIssuer));
-                //        }
-                //    }
                 };
             });
 
