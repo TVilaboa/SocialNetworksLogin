@@ -293,7 +293,32 @@ namespace SocialNetworksLogin.Controllers
                 ViewData["ReturnUrl"] = returnUrl;
                 ViewData["LoginProvider"] = info.LoginProvider;
                 var email = info.Principal.FindFirstValue(ClaimTypes.Email);
-                return View("ExternalLogin", new ExternalLoginViewModel { Email = email });
+
+                var name = info.Principal.FindFirstValue(ClaimTypes.Name);
+
+                var dob = info.Principal.FindFirstValue(ClaimTypes.DateOfBirth);
+
+                var gender = info.Principal.FindFirstValue(ClaimTypes.Gender);
+
+                var identifier = info.Principal.FindFirstValue(ClaimTypes.NameIdentifier);
+
+                var picture = $"https://graph.facebook.com/{identifier}/picture?type=large";
+
+                return View("ExternalLogin", new ExternalLoginViewModel
+
+                {
+
+                    Email = email, //User Email
+
+                    Name = name, //user Display Name
+
+                    DOB = dob,  //User DOB
+
+                    Gender = gender, //User Gender
+
+                    Picture = picture //User Profile Image
+
+                });
             }
         }
 
