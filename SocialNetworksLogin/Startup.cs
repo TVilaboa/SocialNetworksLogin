@@ -46,8 +46,8 @@ namespace SocialNetworksLogin
             services.AddAuthentication()
                 .AddFacebook(options =>
                 {
-                    options.AppId = "1889486091362759";
-                    options.AppSecret = "215a45d1fda94c7b0c8e308e42cb46cd";
+                    options.AppId = Configuration["Authentication:Facebook:AppId"];
+                    options.AppSecret = Configuration["Authentication:Facebook:AppSecret"];
                     options.Scope.Add("user_birthday");
                     options.Scope.Add("public_profile");
                     options.Fields.Add("birthday");
@@ -63,18 +63,16 @@ namespace SocialNetworksLogin
           
             services.AddAuthentication().AddTwitter(twitterOptions =>
             {
-                //twitterOptions.ConsumerKey = Configuration["Authentication:Twitter:ConsumerKey"];
-                //twitterOptions.ConsumerSecret = Configuration["Authentication:Twitter:ConsumerSecret"];
-                twitterOptions.ConsumerKey = "Z3fUDKtxPhN2ZuXakigoy6fe9";
-                twitterOptions.ConsumerSecret = "h4hF4Ce48LTmXnCbhK45wiLX7H2JrztHfTJAY5GqwOj3rijUwu";
+                twitterOptions.ConsumerKey = Configuration["Authentication:Twitter:ConsumerKey"];
+                twitterOptions.ConsumerSecret = Configuration["Authentication:Twitter:ConsumerSecret"];
                 twitterOptions.RetrieveUserDetails = true;
                 twitterOptions.SaveTokens = true;
             });
 
             services.AddAuthentication().AddInstagram(options =>
             {
-                options.ClientId = "d0fdd1b380a94c4781f0f8ad8921531f";
-                options.ClientSecret = "1c4d6a9c48764d72b8dac65960e2df14";
+                options.ClientId = Configuration["Authentication:Instagram:ClientId"];
+                options.ClientSecret = Configuration["Authentication:Instagram:ClientSecret"];
                 options.AuthorizationEndpoint = "https://api.instagram.com/oauth/authorize/";
                 options.CallbackPath = "/signin-instagram";
                 options.TokenEndpoint = "https://api.instagram.com/oauth/access_token";
@@ -117,6 +115,7 @@ namespace SocialNetworksLogin
                             {
                                 context.Identity.AddClaim(new Claim(ClaimTypes.Email, email, ClaimValueTypes.String,
                                     context.Options.ClaimsIssuer));
+                                
                             }
                             var pictureUrl = user.Value<string>("profile_picture");
                             if (!string.IsNullOrEmpty(pictureUrl))

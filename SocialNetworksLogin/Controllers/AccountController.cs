@@ -280,6 +280,8 @@ namespace SocialNetworksLogin.Controllers
             var result = await _signInManager.ExternalLoginSignInAsync(info.LoginProvider, info.ProviderKey, isPersistent: false, bypassTwoFactor: true);
             if (result.Succeeded)
             {
+                await _signInManager.UpdateExternalAuthenticationTokensAsync(info);
+
                 _logger.LogInformation("User logged in with {Name} provider.", info.LoginProvider);
                 return RedirectToLocal(returnUrl);
             }
@@ -302,7 +304,9 @@ namespace SocialNetworksLogin.Controllers
 
                 var identifier = info.Principal.FindFirstValue(ClaimTypes.NameIdentifier);
 
-                var picture = $"https://graph.facebook.com/{identifier}/picture?type=large";
+                //var picture = $"https://graph.facebook.com/{identifier}/picture?type=large";
+
+                var picture = info.Principal.FindFirstValue("profile-picture") ?? (info.LoginProvider == "Facebook" ? $"https://graph.facebook.com/{identifier}/picture?type=large" : "");
 
                 return View("ExternalLogin", new ExternalLoginViewModel
 
@@ -342,6 +346,8 @@ namespace SocialNetworksLogin.Controllers
                     result = await _userManager.AddLoginAsync(user, info);
                     if (result.Succeeded)
                     {
+                        await _signInManager.UpdateExternalAuthenticationTokensAsync(info);
+
                         await _signInManager.SignInAsync(user, isPersistent: false);
                         _logger.LogInformation("User created an account using {Name} provider.", info.LoginProvider);
                         return RedirectToLocal(returnUrl);

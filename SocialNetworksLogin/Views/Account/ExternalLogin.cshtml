@@ -37,6 +37,12 @@
                 <input asp-for="Gender" class="form-control" />
                 <span asp-validation-for="Gender" class="text-danger"></span>
             </div>
+            <div class="form-group">
+                <label asp-for="Picture"></label>
+                <img src="@Model.Picture" alt=""/>
+                <input asp-for="Picture" class="form-control" />
+                <span asp-validation-for="Gender" class="text-danger"></span>
+            </div>
          
             <button type="submit" class="btn btn-default">Register</button>
         </form>
